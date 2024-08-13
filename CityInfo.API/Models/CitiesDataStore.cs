@@ -11,8 +11,8 @@ public class CitiesDataStore
             new()
             {
                 Id = 1,
-                Name = "New York",
-                Description = "The one with that big park",
+                Name = "Paris",
+                Description = "The one with that big tower",
                 PointsOfInterest = new() {
                     new PointOfInterestDto()
                     {

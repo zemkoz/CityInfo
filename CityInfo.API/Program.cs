@@ -1,6 +1,8 @@
+using CityInfo.API.DbContexts;
 using CityInfo.API.Models;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +55,10 @@ builder.Services.AddProblemDetails(options =>
         ctx.ProblemDetails.Extensions.Add("server", Environment.MachineName);
     };
 });*/
+
+// Configure EF
+builder.Services.AddDbContext<CityInfoDbContext>(dbContextOptions => 
+    dbContextOptions.UseSqlite("Data Source=cityinfo.db"));
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
