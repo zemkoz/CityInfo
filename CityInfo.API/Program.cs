@@ -42,7 +42,6 @@ builder.Services.AddTransient<IMailService, LocalMailService>();
 #else
 builder.Services.AddTransient<IMailService, CloudMailService>();
 #endif
-builder.Services.AddSingleton<CitiesDataStore>();
 
 // Customize error responses format
 builder.Services.AddProblemDetails();
@@ -56,9 +55,12 @@ builder.Services.AddProblemDetails(options =>
     };
 });*/
 
-// Configure EF
+// Configure EF and repositories
 builder.Services.AddDbContext<CityInfoDbContext>(dbContextOptions => 
     dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:CityInfoDbConnectionString"]));
+builder.Services.AddScoped<ICityInfoRepository, CityInfoRepository>();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
