@@ -58,7 +58,7 @@ builder.Services.AddProblemDetails(options =>
 
 // Configure EF
 builder.Services.AddDbContext<CityInfoDbContext>(dbContextOptions => 
-    dbContextOptions.UseSqlite("Data Source=cityinfo.db"));
+    dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:CityInfoDbConnectionString"]));
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
