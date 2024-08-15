@@ -1,6 +1,42 @@
-@CityInfo.API_HostAddress = http://localhost:5175
+@host = https://localhost:7129
+@apiVersion = v1
+@bearerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJmYW1pbHlfbmFtZSI6IkRvZSIsImNpdHkiOiJQcmFndWUiLCJuYmYiOjE3MjM3MTY5MTMsImV4cCI6MTcyMzcyMDUxMywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo3MTI5IiwiYXVkIjoiY2l0eWluZm9hcGkifQ.q1ucvAIcHFTJvDv3N9CuwF2chQ-gHXI_JH20mo5Z_to
 
-GET {{CityInfo.API_HostAddress}}/api/cities
+POST {{host}}/api/authentication/authenticate
+Accept: */*
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+###
+
+GET {{host}}/api/{{apiVersion}}/cities
 Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+###
+GET {{host}}/api/{{apiVersion}}/cities
+Accept: application/xml
+Authorization: Bearer {{bearerToken}}
+
+###
+# @name CreatePoi
+POST {{host}}/api/{{apiVersion}}/cities/1/pointsofinterest
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+  "name": "A name for testing",
+  "description": "A description for testing"
+}
+
+###
+@poiid = {{CreatePoi.response.body.id}}
+GET {{host}}/api/{{apiVersion}}/cities/1/pointsofinterest/{{poiid}}
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
 
 ###
