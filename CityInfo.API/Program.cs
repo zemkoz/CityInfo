@@ -3,6 +3,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -142,6 +143,12 @@ builder.Services.AddSwaggerGen(setupAction =>
     
 });
 
+// Because som proxies and load balancers removes some headers like original scheme (https), originating client IP, etc.
+// these information can be sent in X-Forwarded-* headers by the proxy or load balancer.
+// For more see: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-8.0
+builder.Services.Configure<ForwardedHeadersOptions>(options => {
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
@@ -167,6 +174,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseForwardedHeaders();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
