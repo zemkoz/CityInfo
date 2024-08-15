@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace CityInfo.API.Controllers;
 
 [ApiController]
+[ApiVersion(1.0)]
 [Authorize]
-[Route("api/files")]
+[Route("api/v{version:apiVersion}/files")]
 public class FilesController : Controller
 {
     private readonly FileExtensionContentTypeProvider _contentTypeProvider;
@@ -17,6 +19,7 @@ public class FilesController : Controller
     }
 
     [HttpGet("{fileId}")]
+    [ApiVersion(0.1, Deprecated = true)]
     public IActionResult GetFile(string fileId)
     {
         var pathToFile = $"uploaded_file_{fileId}.pdf";

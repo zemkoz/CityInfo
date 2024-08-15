@@ -1,8 +1,12 @@
+using System.Reflection;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,14 +25,10 @@ Log.Logger = new LoggerConfiguration()
     .AddConsole();*/
 builder.Host.UseSerilog();
 
-// Add services to the container.
+// Set up serializers
 builder.Services.AddControllers(options => { options.ReturnHttpNotAcceptable = true; })
     .AddNewtonsoftJson()
     .AddXmlSerializerFormatters();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // Support for serving static files
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
@@ -86,6 +86,63 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
+// Api versioning
+builder.Services.AddApiVersioning(setupAction =>
+{
+    setupAction.ReportApiVersions = true;
+    setupAction.AssumeDefaultVersionWhenUnspecified = true;
+    setupAction.DefaultApiVersion = new ApiVersion(1, 0);
+}).AddMvc().AddApiExplorer(setupAction =>
+{
+    setupAction.SubstituteApiVersionInUrl = true;
+});
+
+// Configure Swagger/OpenAPI
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var apiVersionDescriptionProvider =
+    builder.Services.BuildServiceProvider().GetRequiredService<IApiVersionDescriptionProvider>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    foreach (var apiVersionDescription in apiVersionDescriptionProvider.ApiVersionDescriptions)
+    {
+        setupAction.SwaggerDoc($"{apiVersionDescription.GroupName}",
+            new()
+            {
+                Title = "CityInfo API", 
+                Version = apiVersionDescription.ApiVersion.ToString(),
+                Description = "Through this API you can access information about cities and their points of interest.",
+            });
+    }
+    
+    var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+            
+    setupAction.IncludeXmlComments(xmlCommentsFullPath);
+    setupAction.AddSecurityDefinition("CityInfoBearedAuth", new()
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        Description = "Input a valid JWT token to access this API."
+    });
+    setupAction.AddSecurityRequirement(new()
+    {
+        {
+            new()
+            {
+                Reference = new OpenApiReference()
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "CityInfoBearedAuth"
+                }
+            },
+            new List<String>()
+        }
+    });
+    
+});
+
+
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
@@ -96,7 +153,17 @@ if (!app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(setupAction =>
+    {
+        var descriptions = app.DescribeApiVersions();
+        foreach (var apiVersionDescription in descriptions)
+        {
+            setupAction.SwaggerEndpoint(
+                $"/swagger/{apiVersionDescription.GroupName}/swagger.json",
+                apiVersionDescription.GroupName.ToUpperInvariant()
+                );
+        }
+    });
 }
 
 app.UseHttpsRedirection();
