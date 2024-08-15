@@ -2,12 +2,14 @@
 using CityInfo.API.Entities;
 using CityInfo.API.Models;
 using CityInfo.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.API.Controllers;
 
 [ApiController]
+[Authorize(Policy = "MustBeFromPrague")]
 [Route("api/cities/{cityId}/pointsofinterest")]
 public class PointsOfInterestController : ControllerBase
 {
@@ -31,6 +33,12 @@ public class PointsOfInterestController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<PointOfInterestDto>>> GetAllPointsOfInterest(int cityId)
     {
+        var cityName = User.Claims.FirstOrDefault(c => c.Type == "city")?.Value ?? string.Empty;
+        if (!await _cityInfoRepository.DoesExistCityByIdAndName(cityId, cityName))
+        {
+            return Forbid();
+        }
+        
         if (!await _cityInfoRepository.DoesCityExistsAsync(cityId))
         {
             _logger.LogDebug("City with id {cityId} wasn't found when accessing points of interest.", cityId);

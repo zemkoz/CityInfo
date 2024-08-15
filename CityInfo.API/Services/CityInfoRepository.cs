@@ -58,6 +58,12 @@ public class CityInfoRepository : ICityInfoRepository
             .FirstOrDefaultAsync(c => c.Id == cityId);
     }
 
+    public async Task<bool> DoesExistCityByIdAndName(int cityId, string cityName)
+    {
+        return await _dbContext.Cities
+            .AnyAsync(c => c.Id == cityId && c.Name == cityName);
+    }
+
     public async Task<bool> DoesCityExistsAsync(int cityId)
     {
         return await _dbContext.Cities
